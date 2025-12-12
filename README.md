@@ -412,8 +412,8 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 ## 🙏 Acknowledgments
 
-- Facebook AI Research for the NLLB (No Language Left Behind) model
-- HuggingFace for the Transformers library and infrastructure
+- [Facebook AI Research](https://ai.meta.com/research/) for the NLLB (No Language Left Behind) model
+- [HuggingFace](https://huggingface.co) for the Transformers library and infrastructure
 - [GalsenAI](https://galsen.ai/) for the French-Wolof translation dataset
 
 ## 📧 Contact
@@ -423,5 +423,5 @@ For questions, issues, or contributions, please open an issue on the repository.
 ---
 
 **Version**: 1.0.0  
-**Last Updated**: 2024
+**Last Updated**: 2025
 
