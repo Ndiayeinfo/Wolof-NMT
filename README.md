@@ -38,8 +38,8 @@ A modular, production-ready French-Wolof translation system built on Facebook's 
 
 1. Clone the repository:
 ```bash
-git clone <repository-url>
-cd "GalsenAI translation"
+git clone git@github-second:Galsenaicommunity/Wolof-NMT.git
+cd Wolof-NMT
 ```
 
 2. Install dependencies:
@@ -414,7 +414,7 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 - Facebook AI Research for the NLLB (No Language Left Behind) model
 - HuggingFace for the Transformers library and infrastructure
-- GalsenAI for the French-Wolof translation dataset
+- [GalsenAI](https://galsen.ai/) for the French-Wolof translation dataset
 
 ## 📧 Contact
 
