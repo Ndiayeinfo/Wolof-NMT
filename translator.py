@@ -11,6 +11,12 @@ from config import ModelConfig, DatasetConfig
 class FrenchWolofTranslator:
     """Main translator class for French-Wolof translation."""
     
+    # NLLB language codes (BCP-47 format)
+    LANGUAGE_CODES = {
+        "fr": "fra_Latn",  # French (Latin script)
+        "wo": "wol_Latn",  # Wolof (Latin script)
+    }
+    
     def __init__(
         self,
         model_checkpoint: str,
@@ -40,10 +46,16 @@ class FrenchWolofTranslator:
             self.device = torch.device(device)
         
         # Load tokenizer and model
-        self.tokenizer = AutoTokenizer.from_pretrained(model_checkpoint)
+        # NLLB models require language codes to be set
+        self.tokenizer = AutoTokenizer.from_pretrained(model_checkpoint, src_lang="fra_Latn")
         self.model = AutoModelForSeq2SeqLM.from_pretrained(model_checkpoint)
         self.model.to(self.device)
         self.model.eval()
+        
+        # Cache language token IDs for faster translation
+        self._lang_token_ids = {}
+        for lang_code, bcp47_code in self.LANGUAGE_CODES.items():
+            self._lang_token_ids[lang_code] = self.tokenizer.convert_tokens_to_ids(bcp47_code)
     
     def translate(
         self,
@@ -65,21 +77,35 @@ class FrenchWolofTranslator:
         Raises:
             ValueError: If source_lang is not 'fr' or 'wo'
         """
-        if source_lang.lower() == "wo":
-            prefix = self.dataset_config.prefix_wo_to_fr
-        elif source_lang.lower() == "fr":
-            prefix = self.dataset_config.prefix_fr_to_wo
-        else:
+        source_lang = source_lang.lower()
+        
+        if source_lang not in self.LANGUAGE_CODES:
             raise ValueError(
                 f"Invalid language code: {source_lang}. "
                 "Use 'fr' for French or 'wo' for Wolof."
             )
         
+        # Determine target language
+        target_lang = "wo" if source_lang == "fr" else "fr"
+        
+        # Get language codes
+        src_bcp47 = self.LANGUAGE_CODES[source_lang]
+        tgt_bcp47 = self.LANGUAGE_CODES[target_lang]
+        
+        # Set source language in tokenizer
+        self.tokenizer.src_lang = src_bcp47
+        
         # Prepare input
         inputs = self.tokenizer(
             text,
-            return_tensors="pt"
+            return_tensors="pt",
+            padding=True,
+            truncation=True,
+            max_length=self.model_config.max_length
         ).to(self.device)
+        
+        # Get target language token ID for forced BOS token
+        forced_bos_token_id = self.tokenizer.convert_tokens_to_ids(tgt_bcp47)
         
         # Generate translation
         max_gen_length = (
@@ -87,10 +113,13 @@ class FrenchWolofTranslator:
         )
         translated_tokens = self.model.generate(
             **inputs,
-            max_length=max_gen_length
+            forced_bos_token_id=forced_bos_token_id,
+            max_length=max_gen_length,
+            num_beams=5,
+            early_stopping=True
         )
         
-        # Decode and return
+        # Decode and return (skip the language token)
         translated_text = self.tokenizer.batch_decode(
             translated_tokens,
             skip_special_tokens=True
